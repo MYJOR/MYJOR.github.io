@@ -1,19 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Platformer Game</title>
-  <style>
-    canvas {
-      background: #000;
-      display: block;
-      margin: 0 auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Table with Dropdowns and Export</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        table {
+            width: 100%;
+            background-color: #1e1e1e;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #333;
+        }
+        th {
+            background-color: #333;
+        }
+        .action-btns {
+            margin-top: 20px;
+        }
+        .action-btns button {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
-  <script src="game.js"></script>
+    <div class="container mt-5">
+        <h2 class="text-center">Dynamic Table with Dropdowns and Export</h2>
+        <table id="dynamicTable" class="table table-dark table-bordered">
+            <thead>
+                <tr>
+                    <th>Component ID</th>
+                    <th>IP Address</th>
+                    <th>Component Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+        <div class="action-btns">
+            <button id="addRowBtn" class="btn btn-primary">Add Row</button>
+            <button id="downloadBtn" class="btn btn-success">Download as Excel</button>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script>
+        // Sample data
+        const components = [
+            { id: 'TE12', ip: '192.168.111.13', type: 'Trading Engine' },
+            { id: 'TE22', ip: '192.168.111.14', type: 'Governor' },
+            { id: 'GOV12', ip: '192.168.111.15', type: 'Gateway' }
+        ];
+    
+        const componentIds = ['TE12', 'TE22', 'GOV12', 'GW52', 'GW62', 'GW72', 'GW82', 'DB1', 'DB2', 'DB3'];
+        const ipAddresses = ['192.168.111.13', '192.168.111.14', '192.168.111.15', '192.168.111.20', '192.168.111.21', '192.168.111.22', '192.168.111.23', '192.168.120.36', '192.168.120.37', '192.168.120.38'];
+        const componentTypes = ['Trading Engine', 'Governor', 'Gateway', 'Database'];
+    
+        function createDropdown(options, selectedValue = null) {
+            const select = document.createElement('select');
+            select.classList.add('form-control');
+    
+            options.forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                if (optionValue === selectedValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+    
+            return select;
+        }
+    
+        function createTableRow(component = { id: '', ip: '', type: '' }) {
+            const row = document.createElement('tr');
+    
+            const cellId = document.createElement('td');
+            const dropdownId = createDropdown(componentIds, component.id);
+            cellId.appendChild(dropdownId);
+            row.appendChild(cellId);
+    
+            const cellIp = document.createElement('td');
+            const dropdownIp = createDropdown(ipAddresses, component.ip);
+            cellIp.appendChild(dropdownIp);
+            row.appendChild(cellIp);
+    
+            const cellType = document.createElement('td');
+            const dropdownType = createDropdown(componentTypes, component.type);
+            cellType.appendChild(dropdownType);
+            row.appendChild(cellType);
+    
+            return row;
+        }
+    
+        function populateTable() {
+            const tableBody = document.querySelector('#dynamicTable tbody');
+            components.forEach(component => {
+                const row = createTableRow(component);
+                tableBody.appendChild(row);
+            });
+        }
+    
+        function addRow() {
+            const tableBody = document.querySelector('#dynamicTable tbody');
+            const newRow = createTableRow();
+            tableBody.appendChild(newRow);
+        }
+    
+        function getTableData() {
+            const rows = document.querySelectorAll('#dynamicTable tbody tr');
+            const data = [];
+    
+            rows.forEach(row => {
+                const componentId = row.querySelector('td:nth-child(1) select').value;
+                const ipAddress = row.querySelector('td:nth-child(2) select').value;
+                const componentType = row.querySelector('td:nth-child(3) select').value;
+    
+                data.push({ componentId, ipAddress, componentType });
+            });
+    
+            return data;
+        }
+    
+        function downloadExcel() {
+            const data = getTableData();
+    
+            const worksheet = XLSX.utils.json_to_sheet(data, {
+                header: ["componentId", "ipAddress", "componentType"],
+                skipHeader: true
+            });
+    
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+    
+            XLSX.writeFile(workbook, 'ComponentData.xlsx');
+        }
+    
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTable();
+            document.querySelector('#addRowBtn').addEventListener('click', addRow);
+            document.querySelector('#downloadBtn').addEventListener('click', downloadExcel);
+        });
+    </script>
+    
 </body>
 </html>
